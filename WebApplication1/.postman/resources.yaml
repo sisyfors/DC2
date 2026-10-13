@@ -1,0 +1,7 @@
+# Use this workspace to collaborate
+workspace:
+  id: 2a3f29d8-7b49-4dce-84b1-439cd1bd56a4
+
+localResources:
+  specs:
+    - ../obj/Debug/net10.0/EndpointInfo/WebApplication1.json
