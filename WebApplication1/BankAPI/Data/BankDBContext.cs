@@ -24,6 +24,9 @@ public class BankDbContext : DbContext
             .HasIndex(a => a.AccountNumber)
             .IsUnique();
 
+        modelBuilder.Entity<BankAccount>()
+            .ToTable(t => t.HasCheckConstraint("CK_BankAccount_Balance", "BalanceInCents >= 0"));
+
         // unique username
         modelBuilder.Entity<User>()
             .HasIndex(user => user.Username)
@@ -41,11 +44,19 @@ public class BankDbContext : DbContext
             .HasForeignKey(a => a.UserID)
             .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username).IsUnique();
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email).IsUnique();
+
         // Transactions
         modelBuilder.Entity<BankTrans>()
             .HasOne(t => t.Account)
             .WithMany(a => a.Transactions)
             .HasForeignKey(t => t.AccountID)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<BankTrans>()
+            .ToTable(t => t.HasCheckConstraint("CK_BankTrans_Amount", "AmountInCents > 0"));
     }
 }

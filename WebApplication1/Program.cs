@@ -45,6 +45,15 @@ builder.Services.AddDbContext<BankDbContext>(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<BankDbContext>();
+    dbContext.Database.Migrate();
+    DBSeeder.Seed(dbContext);
+    Console.WriteLine($"DB file: {Path.GetFullPath(dbContext.Database.GetDbConnection().DataSource)}");
+    Console.WriteLine($"Users: {dbContext.Users.Count()}, Accounts: {dbContext.BankAccounts.Count()}, Transactions: {dbContext.BankTransactions.Count()}");
+}
+
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
