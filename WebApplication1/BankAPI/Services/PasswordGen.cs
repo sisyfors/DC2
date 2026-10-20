@@ -29,7 +29,7 @@ namespace WebApplication1.BankAPI.Services
                 HashAlgorithmName.SHA256,
                 32);
 
-            isValid = CryptographicOperations.FixedTimeEquals(hashBytes, Convert.FromBase64String(hash));
+            bool isValid = CryptographicOperations.FixedTimeEquals(hashBytes, Convert.FromBase64String(hash));
 
             return isValid;
         }

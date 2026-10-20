@@ -16,18 +16,25 @@ namespace WebApplication1.BankAPI.Data
 
                 List<User> users = new List<User>();
 
-                for (int i = 0; i < 20; i++)
+                for (int i = 0; i < 25; i++)
                 {
                     var userFaker = new Faker<User>()
                         .RuleFor(u => u.Name, f => f.Name.FullName())
-                        .RuleFor(u => u.Username, f => f.Internet.UserName())
-                        .RuleFor(u => u.Email, f => f.Internet.Email())
                         .RuleFor(u => u.Address, f => f.Address.FullAddress())
                         .RuleFor(u => u.PhoneNumber, f => f.Phone.PhoneNumber())
-                        .RuleFor(u => u.PathToPicture, f => f.Internet.Avatar())
-                        .RuleFor(u => u.PasswordHash, f => PasswordService.HashPassword("password"))
-                        .RuleFor(u => u.PasswordSalted, f => PasswordService.SaltPassword("password"))
-                        .RuleFor(u => u.Active, true);
+                        .RuleFor(u => u.PathToPicture, f => "default.png")
+                        .RuleFor(u => u.Active, true)
+                        .FinishWith((f, u) =>
+                        {
+                            u.Username = $"{u.Username}{i}".ToLower();
+                            u.Email = $"{u.Username}@example.com";
+
+                            var password = "Password123!";
+                            PasswordGen.HashPassword(password, out string hash, out string salted);
+                            u.PasswordHash = hash;
+                            u.PasswordSalted = salted;
+                        });
+
                     var user = userFaker.Generate();
                     users.Add(user);
                 }
@@ -38,7 +45,7 @@ namespace WebApplication1.BankAPI.Data
                 HashSet<string> usedNumbers = new HashSet<string>();
                 List<BankAccount> accounts = new List<BankAccount>();
 
-                for (int i = 0; i < 30; i++)
+                for (int i = 0; i < 35; i++)
                 {
                     string number;
 
@@ -52,9 +59,11 @@ namespace WebApplication1.BankAPI.Data
                     var accountFaker = new Faker<BankAccount>()
                         .RuleFor(a => a.AccountNumber, number)
                         .RuleFor(a => a.AccountType, f => f.PickRandom(new[] { "Checking", "Savings" }))
-                        .RuleFor(a => a.BalanceInCents, f => f.Random.Long(0, 10000000))
+                        .RuleFor(a => a.BalanceInCents, 0)
                         .RuleFor(a => a.IsActive, true)
                         .RuleFor(a => a.UserID, f => f.PickRandom(users).ID);
+
+                    accounts.Add(accountFaker.Generate());
                 }
 
                 dbContext.BankAccounts.AddRange(accounts);
@@ -86,78 +95,77 @@ namespace WebApplication1.BankAPI.Data
                     balances[account.ID] += amount;
                 }
 
-                while (transactions.Count < 500)
+                while (transactions.Count < 505)
                 {
                     start = start.AddMinutes(rand.Next(1, 120));
 
                     var account = accounts[rand.Next(accounts.Count)];
+                    long amount = rand.Next(100, 100000);
 
                     int transactionType = rand.Next(3);
 
-                    if (transactionType == TransactionTypes.Deposit)
+                    switch (transactionType)
                     {
-                        long amount = rand.Next(100, 100000);
-                        transactions.Add(new BankTrans
-                        {
-                            AccountID = account.ID,
-                            TransactionType = TransactionTypes.Deposit,
-                            AmountInCents = amount,
-                            CreatedAtUtc = start
-                        });
-
-                        balances[account.ID] += amount;
-                    }
-                    else if (transactionType == TransactionTypes.Withdrawal)
-                    {
-                        long amount = rand.Next(100, 100000);
-                        if (balances[account.ID] >= amount)
-                        {
+                        case 0: // deposit
                             transactions.Add(new BankTrans
                             {
                                 AccountID = account.ID,
-                                TransactionType = TransactionTypes.Withdrawal,
+                                TransactionType = TransactionTypes.Deposit,
                                 AmountInCents = amount,
                                 CreatedAtUtc = start
                             });
-                            balances[account.ID] -= amount;
-                        }
-                    }
-                    else if (transactionType == TransactionTypes.Transfer)
-                    {
-                        var relatedAccount = accounts[rand.Next(accounts.Count)];
-                        if (relatedAccount.ID != account.ID)
-                        {
-                            long amount = rand.Next(100, 100000);
+
+                            balances[account.ID] += amount;
+                            break;
+                        case 1: // withdrawal
                             if (balances[account.ID] >= amount)
                             {
-                                var transferId = Guid.NewGuid();
                                 transactions.Add(new BankTrans
                                 {
                                     AccountID = account.ID,
-                                    RelatedAccountID = relatedAccount.ID,
-                                    TransactionType = TransactionTypes.Transfer,
+                                    TransactionType = TransactionTypes.Withdrawal,
                                     AmountInCents = amount,
-                                    CreatedAtUtc = start,
-                                    TransferID = transferId
-                                });
-                                transactions.Add(new BankTrans
-                                {
-                                    AccountID = relatedAccount.ID,
-                                    RelatedAccountID = account.ID,
-                                    TransactionType = TransactionTypes.Transfer,
-                                    AmountInCents = amount,
-                                    CreatedAtUtc = start,
-                                    TransferID = transferId
+                                    CreatedAtUtc = start
                                 });
                                 balances[account.ID] -= amount;
-                                balances[relatedAccount.ID] += amount;
                             }
-                        }
-                    }
 
+                            break;
+                        case 2: // transfer
+                            var relatedAccount = accounts[rand.Next(accounts.Count)];
+                            if (relatedAccount.ID != account.ID)
+                            {
+                                if (balances[account.ID] >= amount)
+                                {
+                                    var transferId = Guid.NewGuid();
+                                    transactions.Add(new BankTrans
+                                    {
+                                        AccountID = account.ID,
+                                        RelatedAccountID = relatedAccount.ID,
+                                        TransactionType = TransactionTypes.TransferOut,
+                                        AmountInCents = amount,
+                                        CreatedAtUtc = start,
+                                        TransferID = transferId
+                                    });
+                                    transactions.Add(new BankTrans
+                                    {
+                                        AccountID = relatedAccount.ID,
+                                        RelatedAccountID = account.ID,
+                                        TransactionType = TransactionTypes.TransferIn,
+                                        AmountInCents = amount,
+                                        CreatedAtUtc = start,
+                                        TransferID = transferId
+                                    });
+                                    balances[account.ID] -= amount;
+                                    balances[relatedAccount.ID] += amount;
+                                }
+                            }
+
+                            break;
+                    }
                 }
 
-                dbContext.BankTrans.AddRange(transactions);
+                dbContext.BankTransactions.AddRange(transactions);
 
                 foreach (var account in accounts)
                 {

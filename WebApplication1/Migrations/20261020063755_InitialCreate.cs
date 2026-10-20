@@ -17,7 +17,15 @@ namespace WebApplication1.Migrations
                 {
                     ID = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Username = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Address = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PhoneNumber = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
+                    PathToPicture = table.Column<string>(type: "TEXT", nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
+                    PasswordSalted = table.Column<string>(type: "TEXT", nullable: false),
+                    Active = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,6 +47,7 @@ namespace WebApplication1.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BankAccounts", x => x.ID);
+                    table.CheckConstraint("CK_BankAccount_Balance", "BalanceInCents >= 0");
                     table.ForeignKey(
                         name: "FK_BankAccounts_Users_UserID",
                         column: x => x.UserID,
@@ -63,6 +72,7 @@ namespace WebApplication1.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BankTransactions", x => x.ID);
+                    table.CheckConstraint("CK_BankTrans_Amount", "AmountInCents > 0");
                     table.ForeignKey(
                         name: "FK_BankTransactions_BankAccounts_AccountID",
                         column: x => x.AccountID,
@@ -86,6 +96,18 @@ namespace WebApplication1.Migrations
                 name: "IX_BankTransactions_AccountID",
                 table: "BankTransactions",
                 column: "AccountID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Username",
+                table: "Users",
+                column: "Username",
+                unique: true);
         }
 
         /// <inheritdoc />

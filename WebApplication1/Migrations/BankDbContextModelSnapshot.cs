@@ -15,7 +15,7 @@ namespace WebApplication1.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.BankAccount", b =>
                 {
@@ -49,7 +49,10 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("BankAccounts");
+                    b.ToTable("BankAccounts", t =>
+                        {
+                            t.HasCheckConstraint("CK_BankAccount_Balance", "BalanceInCents >= 0");
+                        });
                 });
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.BankTrans", b =>
@@ -82,7 +85,10 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("AccountID");
 
-                    b.ToTable("BankTransactions");
+                    b.ToTable("BankTransactions", t =>
+                        {
+                            t.HasCheckConstraint("CK_BankTrans_Amount", "AmountInCents > 0");
+                        });
                 });
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.User", b =>
@@ -91,12 +97,53 @@ namespace WebApplication1.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("Active")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordSalted")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PathToPicture")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.HasKey("ID");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });

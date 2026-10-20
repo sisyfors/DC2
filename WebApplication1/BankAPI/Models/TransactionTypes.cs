@@ -4,6 +4,7 @@
     {
         public const string Deposit = "Deposit";
         public const string Withdrawal = "Withdrawal";
-        public const string Transfer = "Transfer";
+        public const string TransferIn = "TransferIn";
+        public const string TransferOut = "TransferOut";
     }
 }
