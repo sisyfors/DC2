@@ -24,6 +24,16 @@ public class BankDbContext : DbContext
             .HasIndex(a => a.AccountNumber)
             .IsUnique();
 
+        // unique username
+        modelBuilder.Entity<User>()
+            .HasIndex(user => user.Username)
+            .IsUnique();
+
+        // unique email
+        modelBuilder.Entity<User>()
+            .HasIndex(user => user.UserEmail)
+            .IsUnique();
+
         // One user can have many bank accounts.
         modelBuilder.Entity<User>()
             .HasMany(u => u.Accounts)
