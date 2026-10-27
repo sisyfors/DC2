@@ -22,30 +22,42 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> CreateAccount(
         [FromBody] CreateAccountRequest request)
     {
+        var details = new Dictionary<string, string>();
         if (string.IsNullOrWhiteSpace(request.AccountNumber))
         {
-            return BadRequest(new { message = "Account number is required." });
+            details.Add("AccountNumber", "Account number is required");
         }
 
-        if (request.AccountNumber.Length > 20)
+        else if (request.AccountNumber.Length > 20)
         {
-            return BadRequest(new { message = "Account number cannot exceed 20 characters." });
+            details.Add("AccountNumber", "Account number cannot exceed 20 characters");
         }
 
         if (request.UserID <= 0)
         {
-            return BadRequest(new { message = "A valid user ID is required." });
+            details.Add("UserID", "A valid user ID is required");
         }
 
         if (request.AccountType != "Savings" &&
             request.AccountType != "Checking")
         {
-            return BadRequest(new { message = "Account type must be Savings or Checking." });
+            details.Add("AccountType", "Account type must be Savings or Checking");
+
         }
 
         if (request.InitialBalanceInCents < 0)
         {
-            return BadRequest(new { message = "Initial balance cannot be negative." });
+            details.Add("InitialBalanceInCents", "Initial balance cannot be negative");
+        }
+
+        if (details.Count > 0)
+        {
+            return BadRequest(new ErrorData
+            {
+                error = "INVALID_ERROR",
+                message = "Invalid account details",
+                details = details
+            });
         }
 
         var userExists = await _context.Users
@@ -53,7 +65,12 @@ public class AccountsController : ControllerBase
 
         if (!userExists)
         {
-            return NotFound(new { message = "User not found." });
+            return NotFound(new ErrorData
+            {
+                error = "USER_NOT_FOUND",
+                message = "User not found",
+                details = null
+            });
         }
 
         var accountExists = await _context.BankAccounts
@@ -61,7 +78,12 @@ public class AccountsController : ControllerBase
 
         if (accountExists)
         {
-            return Conflict(new { message = "Account number already exists." });
+            return Conflict(new ErrorData
+            {
+                error = "ACCOUNT_EXISTS",
+                message = "account exists",
+                details = null
+            });
         }
 
         var account = new BankAccount
@@ -100,7 +122,12 @@ public class AccountsController : ControllerBase
 
         if (account == null)
         {
-            return NotFound(new { message = "Account not found." });
+            return NotFound(new ErrorData
+            {
+                error = "ACCOUNT_NOT_FOUND",
+                message = "account not found",
+                details = null
+            });
         }
 
         return Ok(new

@@ -1,12 +1,13 @@
 ﻿
 namespace WebApplication1.BankAPI.Controllers;
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters.Xml;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.BankAPI.Data;
 using WebApplication1.BankAPI.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Formatters.Xml;
+using WebApplication1.BankAPI.Services;
 
 [ApiController]
 [Route("api/users")]
@@ -73,7 +74,10 @@ public class UsersController : ControllerBase
             UserPhone = request.UsrPhone
         };
 
-        user.UserPasswordHash = new PasswordHasher<User>().HashPassword(user, request.Password);
+        PasswordGen.HashPassword(request.Password, out string hash, out string salt);
+
+        user.UserPasswordHash = hash;
+        user.UserPasswordSalt = salt;
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
@@ -265,19 +269,19 @@ public class UsersController : ControllerBase
             });
         }
 
-        var loginResult = new PasswordHasher<User>().VerifyHashedPassword(user, user.UserPasswordHash, request.Password);
+        var loginResult = PasswordGen.VerifyPassword(request.Password, user.UserPasswordHash, user.UserPasswordSalt);
 
-        if(loginResult == PasswordVerificationResult.Failed)
+        if (loginResult == false)
         {
             return BadRequest(new ErrorData
             {
                 error = "INVALID_ERROR",
-                message = "required feilds are incorrect",
+                message = "incorrect username or password",
                 details = null
             });
         }
 
-        if(user.UserActiveFlag == false)
+        if (user.UserActiveFlag == false)
         {
             return BadRequest(new ErrorData
             {

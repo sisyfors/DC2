@@ -47,7 +47,7 @@ public class BankDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username).IsUnique();
         modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email).IsUnique();
+            .HasIndex(u => u.UserEmail).IsUnique();
 
         // Transactions
         modelBuilder.Entity<BankTrans>()

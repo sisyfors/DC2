@@ -25,6 +25,7 @@ public class User
 
     public string UserPasswordHash { get; set; } = string.Empty;
 
+    public string UserPasswordSalt { get; set; } = string.Empty;
     public bool UserActiveFlag { get; set; } = true;
 
     public List<BankAccount> Accounts { get; set; } = new();

@@ -20,19 +20,19 @@ namespace WebApplication1.BankAPI.Data
                 {
                     var userFaker = new Faker<User>()
                         .RuleFor(u => u.Name, f => f.Name.FullName())
-                        .RuleFor(u => u.Address, f => f.Address.FullAddress())
-                        .RuleFor(u => u.PhoneNumber, f => f.Phone.PhoneNumber())
-                        .RuleFor(u => u.PathToPicture, f => "default.png")
-                        .RuleFor(u => u.Active, true)
+                        .RuleFor(u => u.UserAddress, f => f.Address.FullAddress())
+                        .RuleFor(u => u.UserPhone, f => f.Phone.PhoneNumber())
+                        .RuleFor(u => u.UserPfpPath, f => "default.png")
+                        .RuleFor(u => u.UserActiveFlag, true)
                         .FinishWith((f, u) =>
                         {
                             u.Username = $"{u.Username}{i}".ToLower();
-                            u.Email = $"{u.Username}@example.com";
+                            u.UserEmail = $"{u.Username}@example.com";
 
                             var password = "Password123!";
                             PasswordGen.HashPassword(password, out string hash, out string salted);
-                            u.PasswordHash = hash;
-                            u.PasswordSalted = salted;
+                            u.UserPasswordHash = hash;
+                            u.UserPasswordSalt = salted;
                         });
 
                     var user = userFaker.Generate();
