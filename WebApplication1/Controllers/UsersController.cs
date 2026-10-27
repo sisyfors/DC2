@@ -494,4 +494,36 @@ public class UsersController : ControllerBase
 
         return File(pfpBytes, contentType);
     }
+
+    [HttpPut("{username}/password")]
+    public async Task<IActionResult> ChangePassword(string username, PasswordChangeRequest request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(user => user.Username == username);
+
+        if (user == null)
+            return NotFound(new { message = "sser not found." });
+
+        if (string.IsNullOrWhiteSpace(request.NewUserPassword))
+            return BadRequest(new { message = "new password is required" });
+
+        bool validPassword = PasswordGen.VerifyPassword(
+            request.OldUserPassword,
+            user.UserPasswordHash,
+            user.UserPasswordSalt);
+
+        if (!validPassword)
+            return BadRequest(new { message = "current password is incorrect" });
+
+        PasswordGen.HashPassword(
+            request.NewUserPassword,
+            out string hash,
+            out string salt);
+
+        user.UserPasswordHash = hash;
+        user.UserPasswordSalt = salt;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "password updated successfully" });
+    }
 }

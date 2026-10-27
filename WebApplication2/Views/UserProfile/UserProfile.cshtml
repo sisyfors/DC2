@@ -1,0 +1,117 @@
+﻿@model WebApplication2.Models.User
+
+@{
+    ViewData["Title"] = "User Profile";
+}
+
+<h2>User Profile</h2>
+
+@if (ViewBag.Error != null)
+{
+    <p class="text-danger">@ViewBag.Error</p>
+}
+<div>
+    <p><strong>Username:</strong> @Model.UserName</p>
+    <p><strong>Name:</strong> @Model.Name</p>
+</div>
+<h3>Edit Contact Details</h3>
+
+<div>
+    <label>Email:</label>
+    <input type="email" id="email" value="@Model.UserEmail" />
+</div>
+
+<div>
+    <label>Address:</label>
+    <input type="text" id="address" value="@Model.UserAddress" />
+</div>
+
+<div>
+    <label>Phone:</label>
+    <input type="text" id="phone" value="@Model.UserPhone" />
+</div>
+<button type="button" onclick="UpdateUser()">
+    Save Changes
+</button>
+
+<p id="updateStatus"></p>
+
+<h3>Change Password</h3>
+
+<div>
+    <label>Current Password:</label>
+    <input type="password" id="currentPassword" />
+</div>
+
+<div>
+    <label>New Password:</label>
+    <input type="password" id="newPassword" />
+</div>
+
+<button type="button" onclick="ChangePassword()">
+    Change Password
+</button>
+
+<p id="passwordStatus"></p>
+
+<script>
+    function UpdateUser() {
+
+        var data = {
+            UserEmail: document.getElementById("email").value,
+            UserAddress: document.getElementById("address").value,
+            UserPhone: document.getElementById("phone").value
+        };
+
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        const requestOptions = {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        };
+
+        fetch('/UserProfile/UpdateUser', requestOptions)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Unable to update profile');
+                }
+
+                return response.json();
+            })
+            .then(result => {
+                document.getElementById("updateStatus")
+                    .textContent = result.message;
+            })
+            .catch(error => {
+                document.getElementById("updateStatus")
+                    .textContent = error.message;
+            });
+    }
+    function ChangePassword() {
+        const data = {
+            CurrentPassword: document.getElementById("currentPassword").value,
+            NewPassword: document.getElementById("newPassword").value
+        };
+
+        fetch('/UserProfile/ChangePassword', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Unable to change password");
+            return response.json();
+        })
+        .then(result => {
+            document.getElementById("passwordStatus").textContent = result.message;
+            document.getElementById("currentPassword").value = "";
+            document.getElementById("newPassword").value = "";
+        })
+        .catch(error => {
+            document.getElementById("passwordStatus").textContent = error.message;
+        });
+    }
+</script>
