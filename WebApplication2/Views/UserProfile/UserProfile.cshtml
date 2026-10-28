@@ -92,8 +92,8 @@
     }
     function ChangePassword() {
         const data = {
-            CurrentPassword: document.getElementById("currentPassword").value,
-            NewPassword: document.getElementById("newPassword").value
+            OldUserPassword: document.getElementById("currentPassword").value,
+            NewUserPassword: document.getElementById("newPassword").value
         };
 
         fetch('/UserProfile/ChangePassword', {

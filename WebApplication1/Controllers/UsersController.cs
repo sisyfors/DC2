@@ -159,50 +159,29 @@ public class UsersController : ControllerBase
 
     }
 
-    [HttpGet("SearchByEmail")]
-    public async Task<IActionResult> SearchByEmail(string? userEmail)
+    [HttpGet("SearchByAccountNumber")]
+    public async Task<IActionResult> SearchByAccountNumber(string? accountNumber)
     {
-        var details = new Dictionary<string, string>();
+        if (string.IsNullOrWhiteSpace(accountNumber))
+            return BadRequest(new { message = "account number is required" });
 
-        if (string.IsNullOrWhiteSpace(userEmail))
-        {
-            details.Add("UserEmail", "email is required");
-        }
+        var account = await _context.BankAccounts
+            .Include(acc => acc.User)
+            .FirstOrDefaultAsync(acc => acc.AccountNumber == accountNumber);
 
-        if (details.Count > 0)
-        {
-            return BadRequest(new ErrorData
-            {
-                error = "INVALID_ERROR",
-                message = "required fields missing",
-                details = details
-            });
-        }
-
-        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(usr => usr.UserEmail == userEmail);
-
-        if (user == null)
-        {
-            return NotFound(new ErrorData
-            {
-                error = "USER_NOT_FOUND",
-                message = "User not found",
-                details = null
-            });
-        }
+        if (account == null || account.User == null)
+            return NotFound(new { message = "user not found" });
 
         return Ok(new
         {
-            user.ID,
-            user.Username,
-            user.Name,
-            user.UserEmail,
-            user.UserAddress,
-            user.UserPhone,
-            user.UserPfpPath,
-            user.UserActiveFlag
+            account.User.ID,
+            account.User.Username,
+            account.User.Name,
+            account.User.UserEmail,
+            account.User.UserAddress,
+            account.User.UserPhone,
+            account.User.UserActiveFlag
         });
-
     }
 
     [HttpPut("{username}/deactivate")]
@@ -525,5 +504,45 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "password updated successfully" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var users = await _context.Users
+            .Select(user => new
+            {
+                user.ID,
+                user.Username,
+                user.Name,
+                user.UserEmail,
+                user.UserAddress,
+                user.UserPhone,
+                user.UserActiveFlag
+            })
+            .ToListAsync();
+
+        return Ok(users);
+    }
+
+    [HttpPut("{username}/reset-password")]
+    public async Task<IActionResult> ResetPassword(string username, ResetPasswordRequest resetRequest)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(user => user.Username == username);
+
+        if (user == null)
+            return NotFound(new { message = "User not found" });
+
+        if (string.IsNullOrWhiteSpace(resetRequest.NewPassword))
+            return BadRequest(new { message = "Password is required" });
+
+        PasswordGen.HashPassword(resetRequest.NewPassword, out string passwordHash, out string passwordSalt);
+
+        user.UserPasswordHash = passwordHash;
+        user.UserPasswordSalt = passwordSalt;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Password reset successfully" });
     }
 }
