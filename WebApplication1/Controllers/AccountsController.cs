@@ -140,6 +140,221 @@ public class AccountsController : ControllerBase
             account.UserID
         });
     }
+
+    [HttpGet("~/api/users/{userId:int}/accounts")]
+    public async Task<IActionResult> GetAccountSummary(int userId)
+    {
+        if (!await _context.Users.AnyAsync(u => u.ID == userId))
+        {
+            return NotFound(new ErrorData
+            {
+                error = "USER_NOT_FOUND",
+                message = "User not found",
+                details = null
+            });
+        }
+
+        var accounts = await _context.BankAccounts
+            .AsNoTracking()
+            .Where(a => a.UserID == userId)
+            .OrderBy(a => a.AccountNumber)
+            .Select(a => new
+            {
+                a.AccountNumber,
+                a.AccountType,
+                a.BalanceInCents,
+                a.IsActive
+            })
+            .ToListAsync();
+
+        return Ok(accounts);
+    }
+
+    [HttpGet("{userId:int}/history")]
+    public async Task<IActionResult> GetTransactionHistory(
+        int userId,
+        [FromQuery] string? accountNumber,
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] string sortBy = "date",
+        [FromQuery] string sortOrder = "desc",
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var details = new Dictionary<string, string>();
+
+        if (!await _context.Users.AnyAsync(u => u.ID == userId))
+        {
+            return NotFound(new ErrorData
+            {
+                error = "USER_NOT_FOUND",
+                message = "User not found",
+                details = null
+            });
+        }
+
+        if (page <= 0 || pageSize <= 0)
+        {
+            details.Add("pagination", "page and pageSize must be positive integers");
+            return BadRequest(new ErrorData
+            {
+                error = "INVALID_PAGINATION",
+                message = "Invalid pagination parameters",
+                details = details
+            });
+        }
+
+        if (pageSize > 100)
+        {
+            details.Add("pageSize", "pageSize cannot exceed 100");
+            return BadRequest(new ErrorData
+            {
+                error = "INVALID_PAGINATION",
+                message = "Invalid pagination parameters",
+                details = details
+            });
+        }
+
+        if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+        {
+            details.Add("dateRange", "startDate cannot be after endDate");
+            return BadRequest(new ErrorData
+            {
+                error = "INVALID_DATE_RANGE",
+                message = "Invalid date range",
+                details = details
+            });
+        }
+
+        if (!new[] { "date", "amount", "type" }.Contains(sortBy.ToLower()))
+        {
+            details.Add("sortBy", "sortBy must be 'date', 'amount', or 'type'");
+            return BadRequest(new ErrorData
+            {
+                error = "INVALID_SORT",
+                message = "Invalid sort parameter",
+                details = details
+            });
+        }
+
+        if (!new[] { "asc", "desc" }.Contains(sortOrder.ToLower()))
+        {
+            details.Add("sortOrder", "sortOrder must be 'asc' or 'desc'");
+            return BadRequest(new ErrorData
+            {
+                error = "INVALID_SORT",
+                message = "Invalid sort parameter",
+                details = details
+            });
+        }
+
+        var accounts = await _context.BankAccounts
+            .AsNoTracking()
+            .Where(a => a.UserID == userId)
+            .OrderBy(a => a.AccountNumber)
+            .ToListAsync();
+
+        if (!accounts.Any())
+        {
+            return Ok(new
+            {
+                summary = new List<object>(),
+                transactions = new List<object>(),
+                pagination = new
+                {
+                    page,
+                    pageSize,
+                    totalItems = 0,
+                    totalPages = 0
+                }
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(accountNumber) && !accounts.Any(a => a.AccountNumber == accountNumber))
+        {
+            return NotFound(new ErrorData
+            {
+                error = "ACCOUNT_NOT_FOUND",
+                message = "Account not found for this user",
+                details = null
+            });
+        }
+
+        var accountIds = accounts
+            .Where(a => string.IsNullOrWhiteSpace(accountNumber) || a.AccountNumber == accountNumber)
+            .Select(a => a.ID).ToList();
+
+        var transactionQuery = _context.BankTransactions
+            .AsNoTracking()
+            .Where(t => accountIds.Contains(t.AccountID));
+
+        if (startDate.HasValue)
+        {
+            transactionQuery = transactionQuery.Where(t => t.CreatedAtUtc >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            var endDateInclusive = endDate.Value.Date.AddDays(1);
+            transactionQuery = transactionQuery.Where(t => t.CreatedAtUtc < endDateInclusive);
+        }
+
+        transactionQuery = sortOrder.ToLower() == "asc"
+            ? sortBy.ToLower() switch
+            {
+                "date" => transactionQuery.OrderBy(t => t.CreatedAtUtc),
+                "amount" => transactionQuery.OrderBy(t => t.AmountInCents),
+                "type" => transactionQuery.OrderBy(t => t.TransactionType),
+                _ => transactionQuery.OrderByDescending(t => t.CreatedAtUtc)
+            }
+            : sortBy.ToLower() switch
+            {
+                "date" => transactionQuery.OrderByDescending(t => t.CreatedAtUtc),
+                "amount" => transactionQuery.OrderByDescending(t => t.AmountInCents),
+                "type" => transactionQuery.OrderByDescending(t => t.TransactionType),
+                _ => transactionQuery.OrderByDescending(t => t.CreatedAtUtc)
+            };
+
+        var totalItems = await transactionQuery.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var transactions = await transactionQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(t => new
+            {
+                t.ID,
+                AccountNumber = t.Account!.AccountNumber,
+                t.TransactionType,
+                t.AmountInCents,
+                t.CreatedAtUtc,
+                t.RelatedAccountID
+            })
+            .ToListAsync();
+
+        var accountsSummary = accounts.Select(a => new
+        {
+            a.AccountNumber,
+            a.AccountType,
+            a.BalanceInCents,
+            a.IsActive
+        }).ToList();
+
+        return Ok(new
+        {
+            summary = accountsSummary,
+            transactions,
+            pagination = new
+            {
+                page,
+                pageSize,
+                totalItems,
+                totalPages
+            }
+        });
+    }
+
+
 }
 
 public class CreateAccountRequest

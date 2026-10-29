@@ -58,5 +58,11 @@ public class BankDbContext : DbContext
 
         modelBuilder.Entity<BankTrans>()
             .ToTable(t => t.HasCheckConstraint("CK_BankTrans_Amount", "AmountInCents > 0"));
+
+        // Audit
+        modelBuilder.Entity<AuditEntry>()
+            .HasOne(a => a.AdminUser).WithMany()
+            .HasForeignKey(a => a.AdminUserID)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
