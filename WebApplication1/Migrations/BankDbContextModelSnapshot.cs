@@ -78,6 +78,10 @@ namespace WebApplication1.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("TransferDescription")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid?>("TransferID")
                         .HasColumnType("TEXT");
 

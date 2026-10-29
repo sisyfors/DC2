@@ -1,0 +1,96 @@
+﻿@model List<WebApplication2.Models.BankTrans>
+
+@{
+    ViewData["Title"] = "Transaction Oversight";
+}
+
+<h2>Transaction Oversight</h2>
+
+<form id="transactionForm" asp-controller="Transactions" asp-action="Search" method="get">
+
+    <label>Account Number</label>
+    <input type="text" name="accountNumber" />
+
+    <label>Transaction Type</label>
+    <select name="transactionType">
+        <option value="">All</option>
+        <option value="TransferOut">Transfer Out</option>
+        <option value="TransferIn">Transfer In</option>
+    </select>
+
+    <label>Sort By</label>
+    <select name="sortOrder">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+    </select>
+
+    <button type="submit">Search</button>
+
+</form>
+
+<form asp-controller="Transactions" asp-action="Index" method="get">
+    <button type="submit">Show All Transactions</button>
+</form>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Transaction ID</th>
+            <th>Account ID</th>
+            <th>Related Account ID</th>
+            <th>Transaction Type</th>
+            <th>Amount (Cents)</th>
+            <th>Description</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+
+    <tbody id="transactionTableBody">
+    </tbody>
+</table>
+
+<script>
+    var transactions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+
+    var tableBody = document.getElementById("transactionTableBody");
+
+    transactions.forEach(function (transaction) {
+        var row = document.createElement("tr");
+
+        var relatedAccountID = transaction.RelatedAccountID;
+
+        if (relatedAccountID == null) {
+            relatedAccountID = "";
+        }
+
+        var values = [
+            transaction.ID,
+            transaction.AccountID,
+            relatedAccountID,
+            transaction.TransactionType,
+            transaction.AmountInCents,
+            transaction.TransferDescription,
+            transaction.CreatedAtUtc
+        ];
+
+        values.forEach(function (value) {
+            var cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+
+        tableBody.appendChild(row);
+    });
+
+    document.getElementById("transactionForm").addEventListener("submit", function () {
+        var accountNumber = document.querySelector('input[name="accountNumber"]').value;
+
+        if (accountNumber.trim() == "") {
+            this.action = "/Transactions/Index";
+        }
+        else {
+            this.action = "/Transactions/Search";
+        }
+    });
+</script>

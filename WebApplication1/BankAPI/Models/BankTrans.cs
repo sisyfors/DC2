@@ -16,6 +16,8 @@ public class BankTrans
 
     public long AmountInCents { get; set; }
 
+    public string TransferDescription { get; set; } = string.Empty;
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public Guid? TransferID { get; set; }

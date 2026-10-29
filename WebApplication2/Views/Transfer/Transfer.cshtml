@@ -1,0 +1,40 @@
+﻿
+@model WebApplication2.Models.MoneyTransfer
+
+<h2>Transfer Money</h2>
+
+@if (ViewBag.Message != null)
+{
+    <p>@ViewBag.Message</p>
+}
+
+@if (ViewBag.Error != null)
+{
+    <p>@ViewBag.Error</p>
+}
+
+<form asp-controller="Transfer" asp-action="Transfer" method="post">
+
+    <div>
+        <label>From Account Number</label>
+        <input asp-for="FromAccNumber" />
+    </div>
+
+    <div>
+        <label>To Account Number</label>
+        <input asp-for="ToAccNumber" />
+    </div>
+
+    <div>
+        <label>Amount in cents</label>
+        <input asp-for="AmountInCents" type="number" />
+    </div>
+
+    <div>
+        <label>Description</label>
+        <input asp-for="TransferDescription" />
+    </div>
+
+    <button type="submit">Transfer</button>
+
+</form>
