@@ -1,0 +1,52 @@
+﻿@model UserPageDto
+<h2>Users</h2>
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@if (TempData["Error"] != null || ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@(TempData["Error"] ?? ViewBag.Error)</div>
+}
+
+<form method="get" class="d-flex gap-2 mb-3">
+    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Name, username, email or account number" />
+    <button class="btn btn-primary">Search</button>
+    <a asp-action="Create" class="btn btn-success">New user</a>
+</form>
+
+<table class="table">
+    <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Accounts</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var u in Model.Items)
+        {
+            <tr>
+                <td>@u.Name</td>
+                <td>@u.Username</td>
+                <td>@u.Email</td>
+                <td>@u.Role</td>
+                <td>@u.AccountCount</td>
+                <td>@(u.Active ? "Active" : "Deactivated")</td>
+                <td class="d-flex gap-1">
+                    <a asp-action="Edit" asp-route-id="@u.ID" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a asp-action="ResetPassword" asp-route-id="@u.ID" class="btn btn-sm btn-outline-secondary">Reset password</a>
+                    @if (u.Active)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@u.ID" method="post" onsubmit="return confirm('Deactivate this user?')">
+                            <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (Model.Page > 1)
+{
+    <a asp-action="Index" asp-route-search="@ViewBag.Search" asp-route-page="@(Model.Page - 1)">« Previous</a>
+}
+Page @Model.Page of @Model.TotalPages
+@if (Model.Page < Model.TotalPages)
+{
+    <a asp-action="Index" asp-route-search="@ViewBag.Search" asp-route-page="@(Model.Page + 1)">Next »</a>
+}
