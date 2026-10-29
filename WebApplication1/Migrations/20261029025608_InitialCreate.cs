@@ -19,17 +19,40 @@ namespace WebApplication1.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Username = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Address = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    PhoneNumber = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
-                    PathToPicture = table.Column<string>(type: "TEXT", nullable: false),
-                    PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
-                    PasswordSalted = table.Column<string>(type: "TEXT", nullable: false),
-                    Active = table.Column<bool>(type: "INTEGER", nullable: false)
+                    UserEmail = table.Column<string>(type: "TEXT", nullable: false),
+                    UserAddress = table.Column<string>(type: "TEXT", nullable: false),
+                    UserPhone = table.Column<string>(type: "TEXT", nullable: false),
+                    UserPfpPath = table.Column<string>(type: "TEXT", nullable: false),
+                    UserPasswordHash = table.Column<string>(type: "TEXT", nullable: false),
+                    UserPasswordSalt = table.Column<string>(type: "TEXT", nullable: false),
+                    UserActiveFlag = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Role = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AuditEntry",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AdminUserID = table.Column<int>(type: "INTEGER", nullable: false),
+                    Action = table.Column<string>(type: "TEXT", nullable: false),
+                    Details = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditEntry", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_AuditEntry_Users_AdminUserID",
+                        column: x => x.AdminUserID,
+                        principalTable: "Users",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -82,6 +105,11 @@ namespace WebApplication1.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AuditEntry_AdminUserID",
+                table: "AuditEntry",
+                column: "AdminUserID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_BankAccounts_AccountNumber",
                 table: "BankAccounts",
                 column: "AccountNumber",
@@ -98,9 +126,9 @@ namespace WebApplication1.Migrations
                 column: "AccountID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_Email",
+                name: "IX_Users_UserEmail",
                 table: "Users",
-                column: "Email",
+                column: "UserEmail",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -113,6 +141,9 @@ namespace WebApplication1.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AuditEntry");
+
             migrationBuilder.DropTable(
                 name: "BankTransactions");
 

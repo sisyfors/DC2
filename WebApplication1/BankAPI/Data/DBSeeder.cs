@@ -20,6 +20,7 @@ namespace WebApplication1.BankAPI.Data
                 {
                     var userFaker = new Faker<User>()
                         .RuleFor(u => u.Name, f => f.Name.FullName())
+                        .RuleFor(u => u.Username, f => f.Internet.UserName())
                         .RuleFor(u => u.UserAddress, f => f.Address.FullAddress())
                         .RuleFor(u => u.UserPhone, f => f.Phone.PhoneNumber())
                         .RuleFor(u => u.UserPfpPath, f => "default.png")
@@ -38,6 +39,23 @@ namespace WebApplication1.BankAPI.Data
                     var user = userFaker.Generate();
                     users.Add(user);
                 }
+
+                PasswordGen.HashPassword("AdminPassword123!", out string adminHash, out string adminSalt);
+                User admin = new User
+                {
+                    Name = "Admin User",
+                    Username = "admin",
+                    UserEmail = "admin@example.com",
+                    UserAddress = "123 Admin St",
+                    UserPhone = "0401557881",
+                    UserPfpPath = "default.png",
+                    UserActiveFlag = true,
+                    UserPasswordHash = adminHash,
+                    UserPasswordSalt = adminSalt,
+                    Role = "Admin"
+                };
+                
+                users.Add(admin);
 
                 dbContext.Users.AddRange(users);
                 dbContext.SaveChanges();

@@ -29,4 +29,7 @@ public class User
     public bool UserActiveFlag { get; set; } = true;
 
     public List<BankAccount> Accounts { get; set; } = new();
+
+    [Required]
+    public string Role { get; set; } = "Customer";
 }

@@ -1,0 +1,94 @@
+﻿@model HistoryViewModel
+@{
+    var au = new System.Globalization.CultureInfo("en-AU");
+    var p = Model.Data.Pagination;
+
+    string Link(string? sortBy = null, string? sortOrder = null, int? page = null) =>
+        Url.Action("History", new
+        {
+            accountNumber = Model.AccountNumber,
+            startDate = Model.StartDate.ToString("yyyy-MM-dd"),
+            endDate = Model.EndDate.ToString("yyyy-MM-dd"),
+            sortBy = sortBy ?? Model.SortBy,
+            sortOrder = sortOrder ?? Model.SortOrder,
+            page = page ?? 1,
+            pageSize = p.PageSize
+        })!;
+
+    string Next(string col) => Model.SortBy == col && Model.SortOrder == "asc" ? "desc" : "asc";
+    string Arrow(string col) => Model.SortBy == col ? (Model.SortOrder == "asc" ? " ▲" : " ▼") : "";
+}
+<h2>Transaction history</h2>
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form method="get" asp-action="History" class="row g-2 mb-3">
+    <input type="hidden" name="sortBy" value="@Model.SortBy" />
+    <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
+    <div class="col-auto">
+        <label>Account</label>
+        <select name="accountNumber" class="form-select">
+            <option value="">All accounts</option>
+            @foreach (var a in Model.Data.Summary)
+            {
+                <option value="@a.AccountNumber" selected="@(a.AccountNumber == Model.AccountNumber)">@a.AccountNumber (@a.AccountType)</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto"><label>From</label><input type="date" name="startDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-auto"><label>To</label><input type="date" name="endDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-auto">
+        <label>Per page</label>
+        <select name="pageSize" class="form-select">
+            @foreach (var n in new[] { 10, 25, 50 })
+            {
+                <option value="@n" selected="@(p.PageSize == n)">@n</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto align-self-end"><button class="btn btn-primary">Filter</button></div>
+</form>
+
+@if (!Model.Data.Transactions.Any())
+{
+    <p>No transactions found for this filter.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th><a href="@Link("date", Next("date"))">Date@Arrow("date")</a></th>
+                <th>Account</th>
+                <th><a href="@Link("type", Next("type"))">Type@Arrow("type")</a></th>
+                <th><a href="@Link("amount", Next("amount"))">Amount@Arrow("amount")</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Model.Data.Transactions)
+            {
+                bool debit = t.TransactionType is "Withdrawal" or "TransferOut";
+                <tr>
+                    <td>@t.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                    <td>@t.AccountNumber</td>
+                    <td>@t.TransactionType</td>
+                    <td>@(debit ? "-" : "+")@((t.AmountInCents / 100m).ToString("C", au))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        Page @p.Page of @p.TotalPages (@p.TotalItems transactions)
+        @if (p.Page > 1)
+        {
+            <a href="@Link(page: p.Page - 1)">« Previous</a>
+        }
+        @if (p.Page < p.TotalPages)
+        {
+            <a href="@Link(page: p.Page + 1)">Next »</a>
+        }
+    </nav>
+}
