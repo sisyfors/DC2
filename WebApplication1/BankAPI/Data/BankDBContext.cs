@@ -15,6 +15,8 @@ public class BankDbContext : DbContext
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<BankTrans> BankTransactions => Set<BankTrans>();
 
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

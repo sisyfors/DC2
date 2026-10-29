@@ -6,9 +6,9 @@ namespace WebApplication2.Services
     public class BankApiClient
     {
         private readonly RestClient _client;
-        public BankApiClient(string baseUrl)
+        public BankApiClient(RestClient client)
         {
-            _client = new RestClient(baseUrl);
+            _client = client;
         }
         public Task<ApiResult<T>> GetAsync<T>(
             string resource,

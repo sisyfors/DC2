@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddSingleton(new RestClient(builder.Configuration["ServiceSettings:BaseUrl"]!));
+builder.Services.AddSingleton(new RestClient(builder.Configuration["BankAPI:BaseUrl"]!));
 builder.Services.AddScoped<BankApiClient>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
