@@ -428,3 +428,5 @@ FodyWeavers.xsd
 #*.lscache
 *.db-shm
 *.db-wal
+/WebApplication1/bankdata.db
+/old-bankdata.db
