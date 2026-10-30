@@ -93,7 +93,22 @@ namespace WebApplication2.Services
                 request.AddHeader("Cookie", cookie);
             }
 
-            var response = await _client.ExecuteAsync<T>(request);
+            RestResponse<T> response;
+            try
+            {
+                response = await _client.ExecuteAsync<T>(request);
+            }
+            catch (Exception ex) when (ex is HttpRequestException ||
+                                       ex is TaskCanceledException ||
+                                       ex is InvalidOperationException)
+            {
+                Console.WriteLine($"[API] {method} {resource} failed: {ex.Message}");
+                return new ApiResult<T>
+                {
+                    Success = false,
+                    ErrorMessage = "service is unavailable. please try again later."
+                };
+            }
 
             Console.WriteLine($"[API] {method} {resource} -> {(int)response.StatusCode} " +
                       $"{response.ResponseStatus} {response.ErrorMessage}");
@@ -110,7 +125,22 @@ namespace WebApplication2.Services
                 request.AddHeader("Cookie", cookie);
             }
 
-            var response = await _client.ExecuteAsync<T>(request);
+            RestResponse<T> response;
+            try
+            {
+                response = await _client.ExecuteAsync<T>(request);
+            }
+            catch (Exception ex) when (ex is HttpRequestException ||
+                                       ex is TaskCanceledException ||
+                                       ex is InvalidOperationException)
+            {
+                Console.WriteLine($"[API] {request.Method} {request.Resource} failed: {ex.Message}");
+                return new ApiResult<T>
+                {
+                    Success = false,
+                    ErrorMessage = "service is unavailable. please try again later."
+                };
+            }
 
             Console.WriteLine($"[API] {request.Method} {request.Resource} -> {(int)response.StatusCode} " +
                       $"{response.ResponseStatus} {response.ErrorMessage}");
