@@ -11,14 +11,41 @@ using WebApplication1.BankAPI.Data;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(BankDbContext))]
-    [Migration("20261029063038_AddTransferDescription")]
-    partial class AddTransferDescription
+    [Migration("20261030021808_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+
+            modelBuilder.Entity("WebApplication1.BankAPI.Models.AuditEntry", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AdminUserID")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("AdminUserID");
+
+                    b.ToTable("AuditEntries");
+                });
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.BankAccount", b =>
                 {
@@ -109,6 +136,10 @@ namespace WebApplication1.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("UserActiveFlag")
                         .HasColumnType("INTEGER");
 
@@ -150,6 +181,17 @@ namespace WebApplication1.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("WebApplication1.BankAPI.Models.AuditEntry", b =>
+                {
+                    b.HasOne("WebApplication1.BankAPI.Models.User", "AdminUser")
+                        .WithMany()
+                        .HasForeignKey("AdminUserID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AdminUser");
                 });
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.BankAccount", b =>

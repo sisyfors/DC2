@@ -1,10 +1,16 @@
 ﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using RestSharp;
 
 namespace WebApplication2.Services
 {
     public class BankApiClient
     {
+        private static readonly JsonSerializerOptions JsonOpts = new()
+        {
+            PropertyNameCaseInsensitive = true,
+        };
+
         private readonly RestClient _client;
         public BankApiClient(RestClient client)
         {
@@ -30,7 +36,43 @@ namespace WebApplication2.Services
             return ExecuteAsync<T>(request);
         }
 
-        public Task<ApiResult<T>> SendAsync<T>(
+        private static ApiResult<T>? CheckResponse<T>(RestResponse response)
+        {
+            if (response.StatusCode == 0)
+            {
+                return new ApiResult<T>
+                {
+                    Success = false,
+                    ErrorMessage = "An error occured while processing the request"
+                };
+            }
+
+            if (response.IsSuccessful)
+            {
+                return null;
+            }
+
+            var result = new ApiResult<T> 
+            { 
+                Success = false, 
+                ErrorMessage = "An error occurred while processing the request." 
+            };
+
+            try
+            {
+                var error = JsonSerializer.Deserialize<ApiError>(response.Content ?? "", JsonOpts);
+                if (!string.IsNullOrEmpty(error?.Message))
+                {
+                    result.ErrorMessage = error.Message;
+                }
+
+                result.Details = error?.Details;
+            }
+            catch { }
+            return result;
+        }
+
+        public async Task<ApiResult<T>> SendAsync<T>(
             Method method,
             string resource,
             object? body = null)
@@ -42,55 +84,24 @@ namespace WebApplication2.Services
                 request.AddJsonBody(body);
             }
 
-            return ExecuteAsync<T>(request);
+            var response = await _client.ExecuteAsync(request);
+
+            Console.WriteLine($"[API] {method} {resource} -> {(int)response.StatusCode} " +
+                      $"{response.ResponseStatus} {response.ErrorMessage}");
+
+            var failure = CheckResponse<T>(response);
+            return failure ?? new ApiResult<T> { Success = true };
         }
 
         private async Task<ApiResult<T>> ExecuteAsync<T>(RestRequest request)
         {
             var response = await _client.ExecuteAsync<T>(request);
 
-            // time out if unreachable
-            if (response.ResponseStatus != ResponseStatus.Completed)
-            {
-                return new ApiResult<T>
-                {
-                    Success = false,
-                    ErrorMessage = "The request timed out or the server is unreachable."
-                };
-            }
+            Console.WriteLine($"[API] {request.Method} {request.Resource} -> {(int)response.StatusCode} " +
+                      $"{response.ResponseStatus} {response.ErrorMessage}");
 
-            if (!response.IsSuccessful)
-            {
-                ApiResult<T> result = new ApiResult<T>
-                {
-                    Success = false,
-                    ErrorMessage = "An error occurred while processing the request."
-                };
-
-                try
-                {
-                    var error = JsonSerializer.Deserialize<ApiError>(
-                        response.Content ?? string.Empty);
-
-                    if (!string.IsNullOrEmpty(error?.Message))
-                    {
-                        result.ErrorMessage = error.Message;
-                        result.Details = error?.Details;
-                    }
-                }
-                catch
-                {
-                    // Ignore JSON parsing errors and return the default error message
-                }
-
-                return result;
-            }
-
-            return new ApiResult<T>
-            {
-                Success = true,
-                Data = response.Data
-            };
+            var failure = CheckResponse<T>(response);
+            return failure ?? new ApiResult<T> { Success = true, Data = response.Data };
         }
     }
 }

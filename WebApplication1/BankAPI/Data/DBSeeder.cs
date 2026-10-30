@@ -52,7 +52,7 @@ namespace WebApplication1.BankAPI.Data
                     UserActiveFlag = true,
                     UserPasswordHash = adminHash,
                     UserPasswordSalt = adminSalt,
-                    Role = "Admin"
+                    Role = "Administrator"
                 };
                 
                 users.Add(admin);
