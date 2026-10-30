@@ -402,10 +402,15 @@ public class UsersController : ControllerBase
         var fileName = user.ID.ToString() + extension;
         var filePath = Path.Combine(folderPath, fileName);
 
-        using (var stream = new MemoryStream())
+        var file = System.IO.File.Create(filePath);
+
+        try
         {
-            await picture.CopyToAsync(stream);
-            System.IO.File.WriteAllBytes(filePath, stream.ToArray());
+            await picture.CopyToAsync(file);
+        }
+        finally
+        {
+            file.Close();
         }
 
         user.UserPfpPath = Path.Combine("Pfp", fileName);
