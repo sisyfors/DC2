@@ -34,7 +34,7 @@ namespace WebApplication1.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AuditEntry",
+                name: "AuditEntries",
                 columns: table => new
                 {
                     ID = table.Column<int>(type: "INTEGER", nullable: false)
@@ -46,9 +46,9 @@ namespace WebApplication1.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AuditEntry", x => x.ID);
+                    table.PrimaryKey("PK_AuditEntries", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_AuditEntry_Users_AdminUserID",
+                        name: "FK_AuditEntries_Users_AdminUserID",
                         column: x => x.AdminUserID,
                         principalTable: "Users",
                         principalColumn: "ID",
@@ -89,6 +89,7 @@ namespace WebApplication1.Migrations
                     RelatedAccountID = table.Column<int>(type: "INTEGER", nullable: true),
                     TransactionType = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     AmountInCents = table.Column<long>(type: "INTEGER", nullable: false),
+                    TransferDescription = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
                     TransferID = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
@@ -105,8 +106,8 @@ namespace WebApplication1.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AuditEntry_AdminUserID",
-                table: "AuditEntry",
+                name: "IX_AuditEntries_AdminUserID",
+                table: "AuditEntries",
                 column: "AdminUserID");
 
             migrationBuilder.CreateIndex(
@@ -142,7 +143,7 @@ namespace WebApplication1.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AuditEntry");
+                name: "AuditEntries");
 
             migrationBuilder.DropTable(
                 name: "BankTransactions");

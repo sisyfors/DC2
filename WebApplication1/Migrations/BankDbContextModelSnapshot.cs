@@ -41,7 +41,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("AdminUserID");
 
-                    b.ToTable("AuditEntry");
+                    b.ToTable("AuditEntries");
                 });
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.BankAccount", b =>
