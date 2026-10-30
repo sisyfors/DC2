@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using WebApplication1.BankAPI.Data;
 using WebApplication1.BankAPI.Models;
 using WebApplication1.BankAPI.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/users")]
@@ -269,6 +272,21 @@ public class UsersController : ControllerBase
                 details = null
             });
         }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.ID.ToString()),
+            new(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.Role, user.Role)
+        };
+
+        var identity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity));
 
         return Ok(new
         {

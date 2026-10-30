@@ -12,9 +12,12 @@ namespace WebApplication2.Services
         };
 
         private readonly RestClient _client;
-        public BankApiClient(RestClient client)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public BankApiClient(RestClient client, IHttpContextAccessor httpContextAccessor)
         {
             _client = client;
+            _httpContextAccessor = httpContextAccessor;
         }
         public Task<ApiResult<T>> GetAsync<T>(
             string resource,
@@ -84,17 +87,29 @@ namespace WebApplication2.Services
                 request.AddJsonBody(body);
             }
 
-            var response = await _client.ExecuteAsync(request);
+            var cookie = _httpContextAccessor.HttpContext?.Request.Headers.Cookie.ToString();
+            if (!string.IsNullOrWhiteSpace(cookie))
+            {
+                request.AddHeader("Cookie", cookie);
+            }
+
+            var response = await _client.ExecuteAsync<T>(request);
 
             Console.WriteLine($"[API] {method} {resource} -> {(int)response.StatusCode} " +
                       $"{response.ResponseStatus} {response.ErrorMessage}");
 
             var failure = CheckResponse<T>(response);
-            return failure ?? new ApiResult<T> { Success = true };
+            return failure ?? new ApiResult<T> { Success = true, Data = response.Data };
         }
 
         private async Task<ApiResult<T>> ExecuteAsync<T>(RestRequest request)
         {
+            var cookie = _httpContextAccessor.HttpContext?.Request.Headers.Cookie.ToString();
+            if (!string.IsNullOrWhiteSpace(cookie))
+            {
+                request.AddHeader("Cookie", cookie);
+            }
+
             var response = await _client.ExecuteAsync<T>(request);
 
             Console.WriteLine($"[API] {request.Method} {request.Resource} -> {(int)response.StatusCode} " +

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../WebApplication1/WebApplication1.csproj" />
+  <Project Path="../WebApplication2/WebApplication2.csproj" />
+</Solution>

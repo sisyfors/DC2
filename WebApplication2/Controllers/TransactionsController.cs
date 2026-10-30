@@ -1,65 +1,40 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RestSharp;
 using WebApplication2.Models;
+using WebApplication2.Services;
+using Microsoft.AspNetCore.Authorization;
 
-namespace WebApplication2.Controllers
+namespace WebApplication2.Controllers;
+
+[Authorize(Roles = "Customer")]
+public class TransactionsController : Controller
 {
-    public class TransactionsController : Controller
+    private readonly BankApiClient _bankApiClient;
+
+    public TransactionsController(BankApiClient bankApiClient) => _bankApiClient = bankApiClient;
+
+    [HttpGet]
+    public async Task<IActionResult> Index(string? transactionType, string? sortOrder)
     {
-        [HttpGet]
-        public async Task<IActionResult> Index(string? transactionType, string? sortOrder)
+        var transactions = await _bankApiClient.GetAsync<List<BankTrans>>("api/transactions", new()
         {
-            RestClient restClient = new RestClient("https://localhost:7285");
+            ["transactionType"] = transactionType,
+            ["sortOrder"] = sortOrder
+        });
 
-            RestRequest restRequest = new RestRequest("api/transactions", Method.Get);
+        return View("Index", transactions.Data ?? new List<BankTrans>());
+    }
 
-            if (!string.IsNullOrEmpty(transactionType))
-            {
-                restRequest.AddQueryParameter("transactionType", transactionType);
-            }
-
-            if (!string.IsNullOrEmpty(sortOrder))
-            {
-                restRequest.AddQueryParameter("sortOrder", sortOrder);
-            }
-
-            List<BankTrans>? transactions = await restClient.GetAsync<List<BankTrans>>(restRequest);
-
-            if (transactions == null)
-            {
-                return View("Index", new List<BankTrans>());
-            }
-
-            return View("Index", transactions);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Search(string accountNumber, string? transactionType, string? sortOrder)
+    [HttpGet]
+    public async Task<IActionResult> Search(string accountNumber, string? transactionType, string? sortOrder)
+    {
+        var transactions = await _bankApiClient.GetAsync<List<BankTrans>>("api/transactions/search", new()
         {
-            RestClient restClient = new RestClient("https://localhost:7285");
+            ["accountNumber"] = accountNumber,
+            ["transactionType"] = transactionType,
+            ["sortOrder"] = sortOrder
+        });
 
-            RestRequest restRequest = new RestRequest("api/transactions/search", Method.Get);
-
-            restRequest.AddQueryParameter("accountNumber", accountNumber);
-
-            if (!string.IsNullOrEmpty(transactionType))
-            {
-                restRequest.AddQueryParameter("transactionType", transactionType);
-            }
-
-            if (!string.IsNullOrEmpty(sortOrder))
-            {
-                restRequest.AddQueryParameter("sortOrder", sortOrder);
-            }
-
-            List<BankTrans>? transactions = await restClient.GetAsync<List<BankTrans>>(restRequest);
-
-            if (transactions == null)
-            {
-                return View("Index", new List<BankTrans>());
-            }
-
-            return View("Index", transactions);
-        }
+        return View("Index", transactions.Data ?? new List<BankTrans>());
     }
 }

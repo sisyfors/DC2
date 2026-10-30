@@ -1,0 +1,241 @@
+﻿{
+    "info":  {
+                 "name":  "DC2 WebApplication1 API",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+             },
+    "item":  [
+                 {
+                     "name":  "Requirement 1 - User profile management",
+                     "item":  [
+                                  {
+                                      "name":  "Register customer",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{ \"username\":\"postman_customer_{{$randomInt}}\", \"name\":\"Postman Customer\", \"usrEmail\":\"postman_{{$randomInt}}@example.com\", \"usrAddress\":\"1 Test Street\", \"usrPhone\":\"0400000000\", \"password\":\"{{customerPassword}}\" }"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/users"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Login customer",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{ \"username\":\"{{customerUsername}}\", \"password\":\"{{customerPassword}}\" }"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/users/loginUser"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Retrieve profile by ID",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/api/users/{{customerId}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Search profile by username",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{adminCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/api/users/Search?username={{customerUsername}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update profile",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{ \"name\":\"Updated Customer\", \"userEmail\":\"updated_{{$randomInt}}@example.com\", \"userAddress\":\"2 Updated Street\", \"userPhone\":\"0412345678\" }"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/users/{{customerUsername}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Upload profile picture",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "file",
+                                                                   "file":  {
+                                                                                "src":  ""
+                                                                            }
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/users/{{customerUsername}}/pfp"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Retrieve profile picture",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/api/users/{{customerUsername}}/pfp"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Deactivate profile",
+                                      "request":  {
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{adminCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/api/users/{{customerUsername}}/deactivate"
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Requirement 2 - Transaction management",
+                     "item":  [
+                                  {
+                                      "name":  "Deposit",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{ \"amountInCents\":500, \"description\":\"Postman deposit\" }"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/accounts/{{accountNumber}}/deposit"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Withdrawal",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{ \"amountInCents\":100, \"description\":\"Postman withdrawal\" }"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/accounts/{{accountNumber}}/withdraw"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Withdrawal insufficient funds",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{ \"amountInCents\":999999999, \"description\":\"Expected rejection\""
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/accounts/{{accountNumber}}/withdraw"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Transfer",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{ \"fromAccNumber\":\"{{accountNumber}}\", \"toAccNumber\":\"{{targetAccountNumber}}\", \"amountInCents\":100, \"transferDescription\":\"Postman transfer\" }"
+                                                               },
+                                                      "url":  "{{baseUrl}}/api/transfers"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Transaction history",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Cookie",
+                                                                         "value":  ".DC2.Auth={{customerCookie}}"
+                                                                     }
+                                                                 ],
+                                                      "url":  "{{baseUrl}}/api/transactions"
+                                                  }
+                                  }
+                              ]
+                 }
+             ]
+}

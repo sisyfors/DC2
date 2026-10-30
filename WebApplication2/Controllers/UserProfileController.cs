@@ -1,108 +1,66 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using RestSharp;
 using WebApplication2.Models;
+using WebApplication2.Services;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
-namespace WebApplication2.Controllers
+namespace WebApplication2.Controllers;
+
+[Authorize(Roles = "Customer")]
+public class UserProfileController : Controller
 {
-    public class UserProfileController : Controller
+    private readonly BankApiClient _bankApiClient;
+
+    public UserProfileController(BankApiClient bankApiClient) => _bankApiClient = bankApiClient;
+
+    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    [HttpGet("/UserProfile")]
+    public async Task<IActionResult> GetUserProfile()
     {
-        private readonly RestClient userClient;
-
-        public UserProfileController(IConfiguration configuration)
+        var result = await _bankApiClient.GetAsync<User>($"api/users/{CurrentUserId}");
+        if (!result.Success)
         {
-            string url = configuration["BankApi:BaseUrl"]!;
-            userClient = new RestClient(url);
+            ViewBag.Error = result.ErrorMessage;
+            return View("UserProfile", new User());
         }
 
-        [HttpGet("/UserProfile")]
-        public async Task<IActionResult> GetUserProfile()
-        { 
-            int userId = 28;
+        return View("UserProfile", result.Data ?? new User());
+    }
 
-            RestRequest userRequest = new RestRequest("api/users/" + userId.ToString());
+    [HttpPost]
+    public async Task<IActionResult> UpdateUser([FromBody] User updatedUser)
+    {
+        var result = await _bankApiClient.GetAsync<User>($"api/users/{CurrentUserId}");
+        if (!result.Success || result.Data == null)
+            return StatusCode(502, new { message = "could not retrieve user." });
 
-            try
-            {
-                RestResponse userResponse = await userClient.ExecuteGetAsync(userRequest);
-
-                if (!userResponse.IsSuccessful ||
-                    string.IsNullOrEmpty(userResponse.Content))
-                {
-                    ViewBag.Error = "could not retrieve user";
-                    return View("UserProfile", new User());
-                }
-
-                User? user = JsonConvert.DeserializeObject<User>(userResponse.Content);
-                return View("UserProfile", user ?? new User());
-            }
-            catch (Exception)
-            {
-                ViewBag.Error = "unable to connect to server";
-                return View("UserProfile", new User());
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> UpdateUser([FromBody] User updatedUser)
+        var response = await _bankApiClient.SendAsync<object>(Method.Put, $"api/users/{Uri.EscapeDataString(result.Data.UserName)}", new
         {
-            int userId = 28; // replace this with login
+            Name = result.Data.Name,
+            UserEmail = updatedUser.UserEmail,
+            UserAddress = updatedUser.UserAddress,
+            UserPhone = updatedUser.UserPhone
+        });
 
-            RestRequest getRequest = new RestRequest("api/users/" + userId);
-            RestResponse getResponse = await userClient.ExecuteGetAsync(getRequest);
+        return response.Success
+            ? Json(new { message = "Profile updated successfully." })
+            : StatusCode(502, new { message = response.ErrorMessage ?? "Update failed." });
+    }
 
-            if (!getResponse.IsSuccessful || string.IsNullOrEmpty(getResponse.Content))
-                return StatusCode(502, new { message = "Could not retrieve user." });
+    [HttpPost]
+    public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest passwordRequest)
+    {
+        var result = await _bankApiClient.GetAsync<User>($"api/users/{CurrentUserId}");
+        if (!result.Success || result.Data == null)
+            return StatusCode(502, new { message = "could not retrieve user." });
 
-            User? user = JsonConvert.DeserializeObject<User>(getResponse.Content);
+        var response = await _bankApiClient.SendAsync<object>(Method.Put, $"api/users/{Uri.EscapeDataString(result.Data.UserName)}/password", passwordRequest);
 
-            if (user == null)
-                return StatusCode(502, new { message = "Invalid user data." });
-
-            RestRequest request = new RestRequest("api/users/" + Uri.EscapeDataString(user.UserName));
-
-            request.AddJsonBody(new
-            {
-                Name = user.Name,
-                UserEmail = updatedUser.UserEmail,
-                UserAddress = updatedUser.UserAddress,
-                UserPhone = updatedUser.UserPhone
-            });
-
-            RestResponse response = await userClient.ExecutePutAsync(request);
-
-            if (!response.IsSuccessful)
-                return StatusCode(502, new { message = "Update failed." });
-
-            return Json(new { message = "Profile updated successfully." });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest passwordRequest)
-        {
-            int userId = 28; // implement login here
-
-            RestRequest getRequest = new RestRequest("api/users/" + userId);
-            RestResponse getResponse = await userClient.ExecuteGetAsync(getRequest);
-
-            if (!getResponse.IsSuccessful || string.IsNullOrEmpty(getResponse.Content))
-                return StatusCode(502, new { message = "could not retrieve user" });
-
-            User? user = JsonConvert.DeserializeObject<User>(getResponse.Content);
-
-            if (user == null)
-                return StatusCode(502, new { message = "invalid user data" });
-
-            RestRequest request = new RestRequest("api/users/" + Uri.EscapeDataString(user.UserName) + "/password");
-
-            request.AddJsonBody(passwordRequest);
-
-            RestResponse response = await userClient.ExecutePutAsync(request);
-
-            if (!response.IsSuccessful)
-                return BadRequest(new { message = "unable to change password" });
-
-            return Json(new { message = "password changed successfully." });
-        }
+        return response.Success
+            ? Json(new { message = "password changed successfully." })
+            : BadRequest(new { message = response.ErrorMessage ?? "unable to change password." });
     }
 }

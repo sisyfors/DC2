@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.BankAPI.Data;
 using WebApplication1.BankAPI.Models;
@@ -10,6 +11,7 @@ namespace WebApplication1.Controllers
 {
     [Route("api/transactions")]
     [ApiController]
+    [Authorize(Roles = "Customer")]
     public class TransactionsController : ControllerBase
     {
         private readonly BankDbContext _context;
@@ -22,7 +24,14 @@ namespace WebApplication1.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTransactions(string? transactionType, string? sortOrder)
         {
-            List<BankTrans> transferTransactions = await _context.BankTransactions.ToListAsync();
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                return Forbid();
+            }
+
+            List<BankTrans> transferTransactions = await _context.BankTransactions
+                .Where(t => _context.BankAccounts.Any(a => a.ID == t.AccountID && a.UserID == userId))
+                .ToListAsync();
 
             if (!string.IsNullOrEmpty(transactionType))
             {
@@ -44,10 +53,16 @@ namespace WebApplication1.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> SearchTransactions(string accountNumber, string? transactionType, string? sortOrder)
         {
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId))
+            {
+                return Forbid();
+            }
+
             List<BankTrans> transactions = await _context.BankTransactions.Where(
                 transaction => _context.BankAccounts.Any(
                     account => account.ID == transaction.AccountID &&
-                               account.AccountNumber == accountNumber)).ToListAsync();
+                               account.AccountNumber == accountNumber &&
+                               account.UserID == userId)).ToListAsync();
 
             if (!string.IsNullOrEmpty(transactionType))
             {

@@ -4,10 +4,12 @@ using System.Diagnostics.CodeAnalysis;
 using WebApplication1.BankAPI.Data;
 using WebApplication1.BankAPI.Models;
 using WebApplication1.BankAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplication1.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Administrator")]
     public class AdminController : ControllerBase
     {
         private readonly BankDbContext _dbContext;

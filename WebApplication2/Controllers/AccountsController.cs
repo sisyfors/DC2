@@ -4,6 +4,8 @@ using Newtonsoft.Json;
 using RestSharp;
 using WebApplication2.Models;
 using WebApplication2.Services;
+using System.Security.Claims;
+
 
 namespace WebApplication2.Controllers
 {
@@ -17,7 +19,7 @@ namespace WebApplication2.Controllers
             _bankApiClient = bankApiClient;
         }
 
-        private int CurrentUserId => int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+        private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         public async Task<IActionResult> Index()
         {

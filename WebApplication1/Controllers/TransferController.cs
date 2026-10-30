@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Principal;
 using WebApplication1.BankAPI.Data;
@@ -8,6 +9,7 @@ namespace WebApplication1.Controllers
 {
     [ApiController]
     [Route("api/transfers")]
+    [Authorize(Roles = "Customer")]
     public class TransferController : ControllerBase
     {
         private readonly BankDbContext _context;
@@ -23,12 +25,21 @@ namespace WebApplication1.Controllers
             if (request.AmountInCents <= 0)
                 return BadRequest(new { message = "Invalid transfer amount" });
 
+            if (string.Equals(request.FromAccNumber, request.ToAccNumber, StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { message = "can't not transfer to the same account" });
+
             var fromUserAccount = await _context.BankAccounts.FirstOrDefaultAsync(acct => acct.AccountNumber == request.FromAccNumber);
 
             var toUserAccount = await _context.BankAccounts.FirstOrDefaultAsync(acct => acct.AccountNumber == request.ToAccNumber);
 
             if (fromUserAccount == null || toUserAccount == null)
                 return NotFound(new { message = "account not found" });
+
+            if (!int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId) ||
+                fromUserAccount.UserID != userId)
+            {
+                return Forbid();
+            }
 
             if (!fromUserAccount.IsActive || !toUserAccount.IsActive)
                 return BadRequest(new { message = "account is not active" });
