@@ -163,15 +163,17 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> SearchByAccountNumber(string? accountNumber)
     {
         if (string.IsNullOrWhiteSpace(accountNumber))
+        {
             return BadRequest(new { message = "account number is required" });
-
+        }
         var account = await _context.BankAccounts
             .Include(acc => acc.User)
             .FirstOrDefaultAsync(acc => acc.AccountNumber == accountNumber);
 
         if (account == null || account.User == null)
+        {
             return NotFound(new { message = "user not found" });
-
+        }
         return Ok(new
         {
             account.User.ID,
@@ -536,11 +538,13 @@ public class UsersController : ControllerBase
         var user = await _context.Users.FirstOrDefaultAsync(user => user.Username == username);
 
         if (user == null)
+        {
             return NotFound(new { message = "User not found" });
-
+        }
         if (string.IsNullOrWhiteSpace(resetRequest.NewPassword))
+        {
             return BadRequest(new { message = "Password is required" });
-
+        }
         PasswordGen.HashPassword(resetRequest.NewPassword, out string passwordHash, out string passwordSalt);
 
         user.UserPasswordHash = passwordHash;

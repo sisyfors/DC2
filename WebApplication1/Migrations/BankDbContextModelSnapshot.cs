@@ -41,7 +41,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("AdminUserID");
 
-                    b.ToTable("AuditEntries");
+                    b.ToTable("AuditEntries", (string)null);
                 });
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.BankAccount", b =>
@@ -76,7 +76,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("UserID");
 
-                    b.ToTable("BankAccounts", t =>
+                    b.ToTable("BankAccounts", null, t =>
                         {
                             t.HasCheckConstraint("CK_BankAccount_Balance", "BalanceInCents >= 0");
                         });
@@ -116,7 +116,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("AccountID");
 
-                    b.ToTable("BankTransactions", t =>
+                    b.ToTable("BankTransactions", null, t =>
                         {
                             t.HasCheckConstraint("CK_BankTrans_Amount", "AmountInCents > 0");
                         });
@@ -177,7 +177,7 @@ namespace WebApplication1.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("WebApplication1.BankAPI.Models.AuditEntry", b =>

@@ -21,21 +21,25 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> Transfer(MoneyTransfer request)
         {
             if (request.AmountInCents <= 0)
+            {
                 return BadRequest(new { message = "Invalid transfer amount" });
-
+            }
             var fromUserAccount = await _context.BankAccounts.FirstOrDefaultAsync(acct => acct.AccountNumber == request.FromAccNumber);
 
             var toUserAccount = await _context.BankAccounts.FirstOrDefaultAsync(acct => acct.AccountNumber == request.ToAccNumber);
 
             if (fromUserAccount == null || toUserAccount == null)
+            {
                 return NotFound(new { message = "account not found" });
-
+            }
             if (!fromUserAccount.IsActive || !toUserAccount.IsActive)
+            {
                 return BadRequest(new { message = "account is not active" });
-
+            }
             if (fromUserAccount.BalanceInCents < request.AmountInCents)
+            {
                 return BadRequest(new { message = "not enough funds in account" });
-
+            }
             // we need to verify user session
 
             var transferId = Guid.NewGuid();
