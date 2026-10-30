@@ -10,12 +10,22 @@
 {
     <p class="text-danger">@ViewBag.Error</p>
 }
+<img src="/UserProfile/GetProfilePicture"
+     alt="Profile Picture"
+     width="150"
+     height="150" />
+<div>
+    <input type="file" id="pfpInput" accept=".jpg,.jpeg,.png" />
+
+    <button type="button" onclick="UploadPfp()">
+        Upload Picture
+    </button>
+</div>
 <div>
     <p><strong>Username:</strong> @Model.UserName</p>
     <p><strong>Name:</strong> @Model.Name</p>
 </div>
 <h3>Edit Contact Details</h3>
-
 <div>
     <label>Email:</label>
     <input type="email" id="email" value="@Model.UserEmail" />
@@ -112,6 +122,23 @@
         })
         .catch(error => {
             document.getElementById("passwordStatus").textContent = error.message;
+        });
+    }
+
+        function UploadPfp() {
+        const pfp = document.getElementById("pfpInput").files[0];
+
+        if (!pfp) {
+            alert("Please select a picture.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("pfp", pfp);
+
+        fetch('/UserProfile/UploadProfilePicture', {
+            method: 'POST',
+            body: formData
         });
     }
 </script>
