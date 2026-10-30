@@ -127,7 +127,7 @@ namespace WebApplication1.Controllers
                 errors["Username"] = "Username is required";
             }
 
-            if (string.IsNullOrWhiteSpace(request.UsrEmail) || !request.UsrEmail.Contains("@"))
+            if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains("@"))
             {
                 errors["Email"] = "Need a valid Email";
             }
@@ -152,7 +152,7 @@ namespace WebApplication1.Controllers
                 return Error(409, "USERNAME_TAKEN", "Username already taken");
             }
 
-            if (await _dbContext.Users.AnyAsync(u => u.UserEmail == request.UsrEmail))
+            if (await _dbContext.Users.AnyAsync(u => u.UserEmail == request.Email))
             {
                 return Error(409, "EMAIL_TAKEN", "Email already taken");
             }
@@ -163,9 +163,9 @@ namespace WebApplication1.Controllers
             {
                 Name = request.Name,
                 Username = request.Username,
-                UserEmail = request.UsrEmail,
-                UserAddress = request.UsrAddress ?? "",
-                UserPhone = request.UsrPhone ?? "",
+                UserEmail = request.Email,
+                UserAddress = request.Address ?? "",
+                UserPhone = request.PhoneNumber ?? "",
                 UserPfpPath = "default.png",
                 UserActiveFlag = true,
                 Role = request.Role,
@@ -186,7 +186,7 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPut("api/admin/users/{id:int}")]
-        public async Task<IActionResult> Update(int id, UpdateUserRequest request)
+        public async Task<IActionResult> Update(int id, AdminUpdateUserRequest request)
         {
             var user = await _dbContext.Users.FindAsync(id);
 
@@ -196,11 +196,11 @@ namespace WebApplication1.Controllers
             }
 
             if (string.IsNullOrWhiteSpace(request.Name) ||
-                string.IsNullOrWhiteSpace(request.UserEmail) ||
-                !request.UserEmail.Contains("@"))
+                string.IsNullOrWhiteSpace(request.Email) ||
+                !request.Email.Contains("@"))
             {
                 return Error(
-                    404,
+                    400,
                     "VALIDATION_ERROR",
                     "Invalid updated user details",
                     new Dictionary<string, string>
@@ -209,15 +209,15 @@ namespace WebApplication1.Controllers
                     });
             }
 
-            if (await _dbContext.Users.AnyAsync(u => u.UserEmail == request.UserEmail && u.ID != id))
+            if (await _dbContext.Users.AnyAsync(u => u.UserEmail == request.Email && u.ID != id))
             {
                 return Error(409, "EMAIL_TAKEN", "Email is already taken");
             }
 
             user.Name = request.Name;
-            user.UserEmail = request.UserEmail;
-            user.UserAddress = request.UserAddress ?? "";
-            user.UserPhone = request.UserPhone ?? "";
+            user.UserEmail = request.Email;
+            user.UserAddress = request.Address ?? "";
+            user.UserPhone = request.PhoneNumber ?? "";
 
             await _dbContext.SaveChangesAsync();
 
