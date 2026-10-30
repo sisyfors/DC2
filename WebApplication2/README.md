@@ -22,3 +22,11 @@ For Administrator:
 - In the DBSeeder, it creates 1 admin user with the administrator role
 - Added new AuditEntry and new endpoints "api/audit"
 - New AdminController with new endpoints like "api/users-list", "api/admin/users", etc
+- Changed SearchByEmail() to search by to searchByAccountNumber() to be used in part b transaction searching
+- Added Transfer Controller
+- Added MoneyTransfer Model
+- Added Password Change endpoint to user controller
+- Aded GetAllUsers() to user controller
+- Added Transaction Controller and associated endpoints inside
+
+
